@@ -1,14 +1,11 @@
-from reinforcement_learning.environments import Environment
-from reinforcement_learning.states import State
-from reinforcement_learning.actions import Action
-from reinforcement_learning.agents import Agent
+import reinforcement_learning.base as base
 
 def test_integration():
-    initial_state = State(0)
-    env = Environment(initial_state=initial_state)
+    initial_state = base.State(0)
+    env = base.Environment(initial_state=initial_state)
     assert env.state == initial_state
 
-    agent = Agent(state=initial_state, action_list=env.action_list)
+    agent = base.Agent(state=initial_state, action_list=env.action_list)
     rewards = []
 
     for _ in range(10):
