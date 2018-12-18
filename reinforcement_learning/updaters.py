@@ -1,5 +1,5 @@
-from reinforcement_learning.actions.action import Action
-from reinforcement_learning.states.state import State
+from reinforcement_learning.actions import Action
+from reinforcement_learning.states import State
 
 class Updater(object):
 

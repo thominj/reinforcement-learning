@@ -1,9 +1,9 @@
 import random
 from typing import List
 
-from reinforcement_learning.states.state import State
-from reinforcement_learning.actions.action import Action
-from reinforcement_learning.rewards.reward import Reward
+from reinforcement_learning.states import State
+from reinforcement_learning.actions import Action
+from reinforcement_learning.rewards import Reward
 
 class Agent(object):
 

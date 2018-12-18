@@ -1,9 +1,7 @@
-from reinforcement_learning.environments.environment import Environment
-from reinforcement_learning.actions.action import Action
-from reinforcement_learning.states.state import State
-from reinforcement_learning.updaters.updater import Updater
-from reinforcement_learning.scorers.scorer import Scorer
-from reinforcement_learning.agents.agent import Agent
+from reinforcement_learning.environments import Environment
+from reinforcement_learning.states import State
+from reinforcement_learning.actions import Action
+from reinforcement_learning.agents import Agent
 
 def test_integration():
     initial_state = State(0)

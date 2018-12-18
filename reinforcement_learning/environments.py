@@ -1,9 +1,9 @@
 from typing import List
 
-from reinforcement_learning.states.state import State
-from reinforcement_learning.scorers.scorer import Scorer
-from reinforcement_learning.updaters.updater import Updater
-from reinforcement_learning.actions.action import Action
+from reinforcement_learning.states import State
+from reinforcement_learning.scorers import Scorer
+from reinforcement_learning.updaters import Updater
+from reinforcement_learning.actions import Action
 
 class Environment(object):
     
