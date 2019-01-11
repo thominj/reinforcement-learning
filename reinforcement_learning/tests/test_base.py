@@ -11,7 +11,7 @@ def test_integration():
     for _ in range(10):
         action = agent.choose_action(env.state, env.reward)
         env.update(action)
-        rewards.append(env.reward)
+        rewards.append(env.reward.value)
         agent.learn(env.state, env.reward)        
 
     # At some point the reward should have changed
