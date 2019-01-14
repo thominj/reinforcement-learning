@@ -1,78 +1,70 @@
+"""Classes needed to build a Ciper Puzzle environment."""
 import random
 import re
 from typing import List, Dict
 
-from reinforcement_learning.base import Action, Agent, Environment, Reward, Scorer, State, Updater
+# @todo(jdt): import the module and refer to it in the code, instead
+import reinforcement_learning.base as base
+#from reinforcement_learning.base import Action, Environment, Reward, Scorer, State, Updater
 
-class CipherMutateAction(Action):
+class CipherMutateAction(base.Action):
+    """An action that mutates a cipher
 
+        Args:
+            name (string): A name or short description of the action
+            move (dict): A dict describing the mutation, e.g. {'a':'j'}
+                        would modify the cipher so that 'a' is converted
+                        to 'j' and whatever used to be converted to 'j' is
+                        now converted to whatever 'a' used to be converted to.
+    """
     def __init__(self, name: str, move: Dict):
-        self.name = name
-        self.move = move
+        super().__init__(name, move)
 
-class RandomAgent(Agent):
-    '''Randomly selects an action without considering reward or state.
-    '''
-    def __init__(self, state: 'State', action_list: List['Action']):
-        self._state = state
-        self._action_list = action_list
-
-    def choose_action(self, state: 'State', reward: 'Reward'):
-        return random.choice(self._action_list)
-
-    def learn(self, state: 'State', reward: 'Reward'):
-        pass
-    
-class CipherPuzzleEnvironment(Environment):
-
-    # @todo(jdt) Why can't I get inheritance to work correctly for this class?
+class CipherPuzzleEnvironment(base.Environment):
+    """Environment for training agents to solve a Cipher Puzzle.
+    """
     def __init__(self, initial_state: 'State', words: List[str], phrases: List[str]):
-        self.__state = initial_state
-        self.__scorer = RecognizedWordAndPhraseScorer(words, phrases)
-        self.__updater = CipherPuzzleUpdater()
-        self.__configure_actions()
+        scorer = RecognizedWordAndPhraseScorer(words, phrases)
+        updater = CipherPuzzleUpdater()
+        super().__init__(initial_state, scorer, updater)
 
-    @property
-    def state(self):
-        return self.__state
-
-    @state.setter
-    def state(self, state: 'State'):
-        self.__state = state
-
-    def update(self, action: 'Action'):
-        self.__updater.update_state(self.__state, action)
-        return self.__state
-
-    @property
-    def reward(self):
-        return self.__scorer.get_reward(self.__state)
-
-    @property
-    def action_list(self):
-        return self.__action_list
-    
-    def __configure_actions(self):
+    def _configure_actions(self):
         chars = 'abcdefghijklmnopqrstuvwxyz'
-        self.__action_list = []
         for i in chars:
             for j in chars:
-                self.__action_list.append(CipherMutateAction("{} to {}".format(i,j), {i:j}))
+                self.add_action(CipherMutateAction("{} to {}".format(i, j), {i:j}))
 
-class RecognizedWordAndPhraseScorer(Scorer):
+class RecognizedWordAndPhraseScorer(base.Scorer):
+    """Calculates reward based on recognized words and phrases.
 
+    Args:
+        words: (list) A list of words as strings
+        phrases: (list) A list of phrases
+    """
     def __init__(self, words: List, phrases: List):
-        # TODO: lowercase and remove duplicates
-        self.words = words
-        self.phrases = phrases
+        # lowercase and remove duplicates
+        self._words = {word.lower() for word in words}
+        self._phrases = {phrase.lower() for phrase in phrases}
 
-    def get_reward(self, state: 'CipherPuzzleState'):
+    @property
+    def words(self):
+        """List of words scorer can recognize
+        """
+        return self._words
+
+    @property
+    def phrases(self):
+        """List of phrases scorer can recognize
+        """
+        return self._phrases
+
+    def score(self, state: 'CipherPuzzleState'):
+        """Computes the reward for the current state.
+        """
         current_output = state.current_output
 
         # count number of recognized words
         recognized_word_count = 0
-        # TODO: can we also ignore all characters not in cipher list, so that punctuation
-        # does not mess up score?
         potential_words = current_output.split()
         for word in potential_words:
             word = re.sub(r'[^a-zA-Z]', '', word)
@@ -87,47 +79,86 @@ class RecognizedWordAndPhraseScorer(Scorer):
 
         # return weighted score
         score += (recognized_word_count / len(potential_words))*0.5
-        return Reward(value=score) 
+        return base.Reward(value=score)
 
-class CipherPuzzleState(State):
+class CipherPuzzleState():
+    """Represents the state of a cipher puzzle.
+
+    Args:
+        puzzle: A string of enciphered text
+        cipher: (Cipher) A cipher object
+    """
 
     def __init__(self, puzzle: str, cipher: 'Cipher' = None):
-        self.puzzle = puzzle
+        self._puzzle = puzzle
         if cipher:
-            self.cipher = cipher
+            self._cipher = cipher
         else:
-            self.cipher = Cipher()
+            self._cipher = Cipher()
+
+    @property
+    def puzzle(self):
+        """The puzzle we are trying to solve.
+        """
+        return self._puzzle
+
+    @property
+    def cipher(self):
+        """The key used to decipher the puzzle.
+        """
+        return self._cipher
 
     @property
     def current_output(self):
+        """Plaintext output using the current cipher.
+        """
         return self._get_current_output()
 
     def _get_current_output(self):
         # Apply the cipher to the puzzle and return the output
         return self.cipher.decipher(self.puzzle)
 
-class CipherPuzzleUpdater(Updater):
+class CipherPuzzleUpdater(base.Updater):
+    """Applies a CipherMutateAction to a CipherPuzzleState
 
-    def update_state(self, state: 'State', action: 'Action'):
+    Args:
+        state (CipherPuzzleState): The state that will be mutated.
+        action (CipherMutateAction): The mutation that will be applied.
+
+    """
+
+    def update_state(self, state: 'CipherPuzzleState', action: 'CipherMutateAction'):
         state.cipher.mutate(action)
 
-class Cipher(object):
+class Cipher():
+    """A class for enciphering and deciphering text by using a key.
 
+    Args:
+        initial_map: (dict) A 1:1 mapping of characters to characters.
+
+    Raises:
+        CipherException when initial_map is not 1:1.
+    """
     chars = list('abcdefghijklmnopqrstuvwxyz')
 
-    def __init__(self, initial_map = None):
+    def __init__(self, initial_map=None):
         if initial_map:
+            keys = set(initial_map.keys())
+            values = set(initial_map.values())
+            if len(keys) != len(values):
+                raise CipherException('Cipher map is not one-to-one.')
             self.map = initial_map
-            # TODO: need to check that map is 1:1
         else:
             self.map = self._generate_random_map()
         self.reverse_map = {v: k for k, v in self.map.items()}
 
     def _generate_random_map(self):
-        random_chars =  random.sample(self.chars, len(self.chars))  
+        random_chars = random.sample(self.chars, len(self.chars))
         return {k: v for k, v in zip(self.chars, random_chars)}
-    
+
     def encipher(self, text: str):
+        """Uses cipher to convert plain text string to ciphertext.
+        """
         cipher_text = ''
         for char in text:
             if self.map.get(char):
@@ -135,8 +166,10 @@ class Cipher(object):
             else:
                 cipher_text += char
         return cipher_text
-    
+
     def decipher(self, cipher_text: str):
+        """Uses cipher to convert ciphertext to plain text
+        """
         plain_text = ''
         for char in cipher_text:
             if self.reverse_map.get(char):
@@ -146,11 +179,36 @@ class Cipher(object):
         return plain_text
 
     def mutate(self, action: 'CipherMutateAction'):
+        """Mutates the cipher.
+
+        The move consists of a character key and value. The mutation will swap the
+        characters in the map. For example, given a map:
+
+        {
+            'a': 'z',
+            'b': 'x',
+            'c': 'y',
+        }
+
+        A CipherMutateAction containing the move {'a': 'x'} would result in 'a' pointing
+        to 'x' and 'b' pointing to 'z', since 'b' was formerly pointing to 'x' and 'a' was
+        formerly pointing to 'z'. The final map would look like:
+
+        {
+            'a': 'x',
+            'b': 'z',
+            'c': 'y',
+        }
+
+        Args:
+            action (CipherMutateAction): Contains a move indicating which character
+            should change, and what it should change to.
+        """
         # get key and value (dict has one item)
         [(key, value)] = action.move.items()
 
         # get current value for this key
-        current_value = self.map.get(key) 
+        current_value = self.map.get(key)
 
         # get current key for this value
         current_key = self.reverse_map.get(value)
@@ -162,3 +220,8 @@ class Cipher(object):
         # change map value at current key to current value
         self.map[current_key] = current_value
         self.reverse_map[current_value] = current_key
+
+class CipherException(Exception):
+    """Raised when an exception occurs in a Cipher object.
+    """
+    

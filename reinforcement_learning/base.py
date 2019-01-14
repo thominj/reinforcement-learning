@@ -1,74 +1,109 @@
-import random
-from typing import List
+"""Base classes for reinforcement learning
+"""
 
-class Action(object):
+import abc
+
+class Action():
+    """Base class for actions that Agents can choose to take.
+    """
 
     def __init__(self, name: str, move: int):
-        self.name = name
-        self.move = move
+        self.__name = name
+        self.__move = move
 
-class Agent(object):
+    @property
+    def name(self):
+        """Short description of this action.
+        """
+        return self.__name
 
-    def __init__(self, state: 'State', action_list: List['Action']):
-        self._state = state
-        self._action_list = action_list
+    @property
+    def move(self):
+        """The actual move this action will perform.
+        """
+        return self.__move
 
-    def choose_action(self, state: 'State', reward: 'Reward'):
-        return random.choice(self._action_list)
+class Environment(abc.ABC):
+    """Base class for a Reinforcement Learning Environment
 
-    def learn(self, state: 'State', reward: 'Reward'):
-        pass
-    
-class Environment(object):
-    
-    def __init__(self, initial_state: 'State'):
-        self.__state = initial_state
-        self.__scorer = Scorer()
-        self.__updater = Updater()
-        self.__configure_actions()
+    Environments are what Agents interact with. The contain a state, a scorer, and an updater.
+    Agents observe the state, perform actions which update the state using the updater, and
+    receive a reward from the scorer based on the new state.
+    """
+
+    def __init__(self, initial_state: 'State', scorer: 'Scorer', updater: 'Updater'):
+        self._state = initial_state
+        self._scorer = scorer
+        self._updater = updater
+        self._action_list = []
+        self._configure_actions()
 
     @property
     def state(self):
-        return self.__state
+        """The current state of the environment.
+        """
+        return self._state
 
     @state.setter
     def state(self, state: 'State'):
-        self.__state = state
+        self._state = state
 
     def update(self, action: 'Action'):
-        self.__updater.update_state(self.__state, action)
-        return self.__state
+        """Updates the state using the provided Action
+
+        Args:
+            action (Action): Describes a change in state.
+        """
+        self._updater.update_state(self._state, action)
+        return self._state
 
     @property
     def reward(self):
-        return self.__scorer.get_reward(self.__state)
+        """The reward for the current state
+        """
+        return self._scorer.score(self._state)
 
-    def __configure_actions(self):
-        self.__action_list = []
-        self.__action_list.append(Action('up', 1))
-        self.__action_list.append(Action('down', -1))
+    @abc.abstractmethod
+    def _configure_actions(self):
+        pass
 
     @property
     def action_list(self):
-        return self.__action_list
+        """List of actions that agents can take.
+        """
+        return self._action_list
 
-class Reward(object):
-    
+    def add_action(self, action: 'Action'):
+        """Adds an action to the action list.
+        """
+        self._action_list.append(action)
+
+class Reward():
+    """Reward computed by a Scorer for a given State.
+    """
     def __init__(self, value):
         self.value = value
 
-class Scorer(object):
-    
-    def get_reward(self, state: 'State'):
-        return Reward(state.value - 0) 
+class Scorer(abc.ABC):
+    """Computes a Reward based on the current State.
+    """
+    @abc.abstractmethod
+    def score(self, state: 'State') -> 'Reward':
+        """Returns the score for a given State.
+        """
+        return Reward(0)
 
-class State(object):
-
+class State():
+    """All information about an environment needed by the Scorer
+    to compute a Reward, and by an Agent to decide on a new Action.
+    """
     def __init__(self, initial_value):
         self.value = initial_value
 
-class Updater(object):
-
+class Updater():
+    """Updates the State according to the given Action.
+    """
     def update_state(self, state: 'State', action: 'Action'):
+        """Applies the action to the state.
+        """
         state.value += action.move
-    
