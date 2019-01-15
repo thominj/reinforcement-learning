@@ -221,7 +221,13 @@ class Cipher():
         self.map[current_key] = current_value
         self.reverse_map[current_value] = current_key
 
+class CipherPuzzleOutput(base.Output):
+
+    def display(self, state: 'CipherPuzzleState', reward: 'Reward', trainer: 'Trainer'):
+        print(f'Current output: {state.current_output}')
+        print(f'Puzzle: {state.puzzle}')
+        print(f'Scenario: {trainer.scenario_count}, Trial: {trainer.trial}')        
+
 class CipherException(Exception):
     """Raised when an exception occurs in a Cipher object.
     """
-    

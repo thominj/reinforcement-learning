@@ -21,8 +21,8 @@ class Agent(abc.ABC):
         """
 
 class RandomAgent(Agent):
-    '''Randomly selects an action without considering reward or state.
-    '''
+    """Randomly selects an action without considering reward or state.
+    """
 
     def choose_action(self):
         """Randomly chooses an action from the action_list.
