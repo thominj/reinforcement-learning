@@ -40,7 +40,7 @@ def test_simulator():
             self.choose_action_counter += 1
             return self._action_list[0]
 
-        def learn(self):
+        def learn(self, state: 'base.State', reward: 'base.Reward'):
             self.learn_counter += 1
 
     class TestViewModel(view_models.ViewModel):
@@ -57,18 +57,21 @@ def test_simulator():
 
     view_model = TestViewModel()
 
+    num_scenarios = 5
+    num_steps = 10
+
     test_simulator = simulator.Simulator(
         environment_generator=environment_generator,
         agent=agent,
         view_model=view_model,
-        num_scenarios=10,
-        num_rounds=10)
+        num_scenarios=num_scenarios,
+        num_steps=num_steps)
 
     assert isinstance(test_simulator, simulator.Simulator)
 
     test_simulator.run()
 
-    assert environment_generator.new_environment_counter == 10
-    assert agent.choose_action_counter == 100
-    assert agent.learn_counter == 100
-    assert view_model.update_counter == 100
+    assert environment_generator.new_environment_counter == num_scenarios + 1 # We called it once to build action list for agent
+    assert agent.choose_action_counter == num_scenarios * num_steps
+    assert agent.learn_counter == num_scenarios * num_steps
+    assert view_model.update_counter == num_scenarios * num_steps
