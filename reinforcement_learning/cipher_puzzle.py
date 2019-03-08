@@ -3,9 +3,7 @@ import random
 import re
 from typing import List, Dict
 
-# @todo(jdt): import the module and refer to it in the code, instead
 import reinforcement_learning.base as base
-#from reinforcement_learning.base import Action, Environment, Reward, Scorer, State, Updater
 
 class CipherMutateAction(base.Action):
     """An action that mutates a cipher

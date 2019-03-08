@@ -138,3 +138,4 @@ class EnvironmentGenerator(abc.ABC):
     @abc.abstractmethod
     def new_environment(self) -> 'Environment':
         pass
+
