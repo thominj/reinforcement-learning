@@ -1,6 +1,6 @@
 import reinforcement_learning.agents as agents
 import reinforcement_learning.base as base
-import reinforcement_learning.cipher_puzzle as cipher_puzzle
+import reinforcement_learning.demos.cipher_puzzle as cipher_puzzle
 import reinforcement_learning.trainers as trainers
 
 def test_monte_carlo_trainer():

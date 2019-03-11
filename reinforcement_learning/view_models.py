@@ -5,6 +5,7 @@ import abc
 import reinforcement_learning.base as base
 import reinforcement_learning.agents as agents
 
+# @todo(jdt): Move this to base module?
 class ViewModel(abc.ABC):
 
     @abc.abstractmethod

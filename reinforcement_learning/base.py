@@ -112,6 +112,7 @@ class Updater():
         """
         state.value += action.move
 
+# @todo(jdt): I don't think we need an output class anymore if we are using ViewModels
 class Output(abc.ABC):
 
     @abc.abstractmethod

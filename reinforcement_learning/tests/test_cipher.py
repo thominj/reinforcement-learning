@@ -3,7 +3,7 @@
 
 import pytest
 import reinforcement_learning.agents as agents
-import reinforcement_learning.cipher_puzzle as cipher_puzzle
+import reinforcement_learning.demos.cipher_puzzle.cipher_puzzle as cipher_puzzle
 
 def test_create_cipher():
     cipher = cipher_puzzle.Cipher()
@@ -93,7 +93,7 @@ def test_integration():
     rewards = [env.reward.value]
 
     for _ in range(10):
-        action = agent.choose_action()
+        action = agent.choose_action(env.state)
         env.update(action)
         rewards.append(env.reward.value)
 

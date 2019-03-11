@@ -5,19 +5,6 @@ with open("README.md", "r") as fh:
 
 from setuptools import setup
 
-setup(
-    name='yourscript',
-    version='0.1',
-    py_modules=['yourscript'],
-    install_requires=[
-        'Click',
-    ],
-    entry_points='''
-        [console_scripts]
-        yourscript=yourscript:cli
-    ''',
-)
-
 setuptools.setup(
     name="reinforcement_learning",
     version="0.0.1",
@@ -43,7 +30,7 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts': [
-            'rl_demo = reinforcement_learning.main:cli'
+            'rl_demo = cli:demo'
         ]
     }
 )
