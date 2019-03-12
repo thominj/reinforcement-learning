@@ -31,10 +31,10 @@ def test_integration():
     rewards = []
 
     for _ in range(100):
-        action = agent.choose_action()
+        action = agent.choose_action(env.state)
         env.update(action)
         rewards.append(env.reward.value)
-        agent.learn()
+        agent.learn(env.state, env.reward)
 
     # At some point the reward should have changed
     assert len(set(rewards)) > 1

@@ -82,7 +82,11 @@ class Reward():
     """Reward computed by a Scorer for a given State.
     """
     def __init__(self, value):
-        self.value = value
+        self._value = value
+
+    @property
+    def value(self):
+        return self._value
 
 class Scorer(abc.ABC):
     """Computes a Reward based on the current State.
@@ -107,3 +111,32 @@ class Updater():
         """Applies the action to the state.
         """
         state.value += action.move
+
+# @todo(jdt): I don't think we need an output class anymore if we are using ViewModels
+class Output(abc.ABC):
+
+    @abc.abstractmethod
+    def display(self, state: 'State', reward: 'Reward', trainer: 'Trainer'):
+        """Displays the relevent information about the current state and reward.
+        """
+
+class Trainer():
+
+    def __init__(self):
+        self._scenario_count = 0
+        self._trial = 0
+
+    @property
+    def scenario_count(self):
+        return self._scenario_count
+
+    @property
+    def trial(self):
+        return self._trial
+
+class EnvironmentGenerator(abc.ABC):
+
+    @abc.abstractmethod
+    def new_environment(self) -> 'Environment':
+        pass
+
