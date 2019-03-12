@@ -20,14 +20,14 @@ def demo():
             phrases_list.append(quote)
 
     num_scenarios = 1
-    num_steps = 10000000
+    num_steps = 10
 
     environment_generator = cipher_puzzle.CipherPuzzleEnvironmentGenerator(
         words_list=words_list,
         phrases_list=phrases_list)
     environment = environment_generator.new_environment()
 
-    agent = agents.RandomAgent(environment.action_list)
+    agent = cipher_puzzle.CipherPuzzleAgent(environment.action_list)
 
     view_model = cipher_puzzle.CipherPuzzlePrintViewModel()
 

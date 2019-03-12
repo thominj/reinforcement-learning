@@ -5,6 +5,7 @@ import re
 from typing import List, Dict
 
 import reinforcement_learning.base as base
+import reinforcement_learning.agents as agents
 import reinforcement_learning.view_models as view_models
 
 class CipherMutateAction(base.Action):
@@ -260,7 +261,7 @@ class CipherPuzzlePrintViewModel(view_models.ViewModel):
             self.best_solution = environment.state.current_output
             self.best_score = environment.reward.value
 
-        if step_count % 10000 == 0:
+        if step_count % 1 == 0:
             print("{}, {}, {}, {}, {}, {}, {}, {}".format(
                 datetime.datetime.now(),
                 scenario_count,
@@ -270,6 +271,30 @@ class CipherPuzzlePrintViewModel(view_models.ViewModel):
                 environment.reward.value,
                 self.best_solution,
                 self.best_score))
+
+class CipherPuzzleAgent(agents.Agent):
+
+    map = {}
+
+    def choose_action(self, state: "base.State"):
+
+        current_map = state.cipher.map
+        puzzle = state.puzzle
+        current_output = state.current_output
+
+        # Are there any one-letter words? Try making them A or I
+        # Any two-letter words? Try making them of, to, an
+        # Any three letter words? Try the, and, but, any
+        # If all of these have been tried, take the best options and "freeze" them
+        # Randomly try letter substitutions that a) are in the puzzle and b) don't mess up earlier good scores
+
+        #return random.choice(self._action_list)
+
+    def learn(self, state: "base.State", reward: "base.Reward"):
+        # Did the reward increase? If so, "save" this move. Otherwise we should go back.
+        # Maybe this looks like a property that says whether we should undo or not. If "undo" then we just reverse the last action.
+        # If we save the move, we need to mark the action as preferred. Maybe we keep a dictionary of action list indices with the score,
+        # and sample so that we prefer to not change higher scores?
 
 class CipherException(Exception):
     """Raised when an exception occurs in a Cipher object.
