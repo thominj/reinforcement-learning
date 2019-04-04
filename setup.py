@@ -23,6 +23,7 @@ setuptools.setup(
     ],
     install_requires=[
         'Click',
+        'numpy',
         'pytest',
     ],
     tests_require=[

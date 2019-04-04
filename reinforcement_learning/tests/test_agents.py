@@ -26,5 +26,4 @@ def testLearningRandomAgentLearns():
             unrewarded_action_count += 1
 
         agent.learn(state, reward)
-
     assert rewarded_action_count - unrewarded_action_count > 0

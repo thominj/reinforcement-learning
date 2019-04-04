@@ -6,8 +6,17 @@ import reinforcement_learning.agents as agents
 import reinforcement_learning.simulator as simulator
 
 @click.command()
-def demo():
-    """Demonstrates a scenario using a random Agent and a Cipher Puzzle"""
+@click.option('-a', '--agent', help="The agent you want to use: [random (default), learningRandom, cipherPuzzleLearningRandom]", default='random', type=str, )
+@click.option('-n', '--num_steps', help="The number of steps to run for each scenario.", default=100, type=int)
+@click.option('-s', '--num_scenarios', help="The number of scenarios to run.", default = 10, type=int)
+def demo(agent, num_steps, num_scenarios):
+    """Demonstrates a scenario using a specified Agent and a Cipher Puzzle"""
+    agent_options = {
+        'random': agents.RandomAgent,
+        'learningRandom': agents.LearningRandomAgent,
+        'cipherPuzzleLearningRandom': cipher_puzzle.CipherPuzzleLearningRandomAgent,
+    }
+    
     words_list = []
     phrases_list = []
 
@@ -19,15 +28,13 @@ def demo():
         for quote in quote_file:
             phrases_list.append(quote)
 
-    num_scenarios = 1
-    num_steps = 10
-
     environment_generator = cipher_puzzle.CipherPuzzleEnvironmentGenerator(
         words_list=words_list,
         phrases_list=phrases_list)
     environment = environment_generator.new_environment()
 
-    agent = cipher_puzzle.CipherPuzzleAgent(environment.action_list)
+    agent = agent_options[agent](environment.action_list)
+#    agent = cipher_puzzle.CipherPuzzleAgent(environment.action_list)
 
     view_model = cipher_puzzle.CipherPuzzlePrintViewModel()
 
