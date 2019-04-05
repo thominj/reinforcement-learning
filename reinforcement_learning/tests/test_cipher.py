@@ -3,23 +3,23 @@
 
 import pytest
 import reinforcement_learning.agents as agents
-import reinforcement_learning.demos.cipher_puzzle.cipher_puzzle as cipher_puzzle
+import reinforcement_learning.demos.cipher_puzzle.base as cp_base
 
 def test_create_cipher():
-    cipher = cipher_puzzle.Cipher()
+    cipher = cp_base.Cipher()
     assert cipher.map is not None
     assert cipher.reverse_map is not None
 
     good_initial_map = {'a': 'b'}
-    cipher = cipher_puzzle.Cipher(initial_map=good_initial_map)
+    cipher = cp_base.Cipher(initial_map=good_initial_map)
     assert cipher.map == good_initial_map
 
     bad_initial_map = {'a': 'c', 'b': 'c'}
-    with pytest.raises(cipher_puzzle.CipherException):
-        cipher = cipher_puzzle.Cipher(bad_initial_map)
+    with pytest.raises(cp_base.CipherException):
+        cipher = cp_base.Cipher(bad_initial_map)
 
 def test_encipher_and_decipher():
-    cipher = cipher_puzzle.Cipher()
+    cipher = cp_base.Cipher()
     plain_text = 'This is some plain text.'
     cipher_text = cipher.encipher(plain_text)
     assert cipher_text != plain_text
@@ -27,7 +27,7 @@ def test_encipher_and_decipher():
     assert deciphered_text == plain_text
 
 def test_mutate_cipher():
-    cipher = cipher_puzzle.Cipher({
+    cipher = cp_base.Cipher({
         'a': 'z',
         'b': 'x',
         'c': 'y',
@@ -39,26 +39,26 @@ def test_mutate_cipher():
     plain_text = 'abc'
     assert cipher.encipher(plain_text) == 'zxy'
 
-    action = cipher_puzzle.CipherMutateAction('a to y', {'a': 'y'})
+    action = cp_base.CipherMutateAction('a to y', {'a': 'y'})
     cipher.mutate(action)
 
     assert cipher.encipher(plain_text) == 'yxz'
 
 def test_scorer():
     target_text = 'a very fine day for a test!'
-    original_cipher = cipher_puzzle.Cipher()
+    original_cipher = cp_base.Cipher()
     puzzle = original_cipher.encipher(target_text)
 
     words = ['a', 'very', 'fine', 'day', 'for', 'test']
     phrases = ['a very fine day for a test!']
-    scorer = cipher_puzzle.RecognizedWordAndPhraseScorer(words=words, phrases=phrases)
+    scorer = cp_base.RecognizedWordAndPhraseScorer(words=words, phrases=phrases)
 
     # Score should be 1 with the original cipher
-    solved_state = cipher_puzzle.CipherPuzzleState(puzzle=puzzle, cipher=original_cipher)
+    solved_state = cp_base.CipherPuzzleState(puzzle=puzzle, cipher=original_cipher)
     assert abs(1.0 - scorer.score(state=solved_state).value) <= 0.0001
 
     # Score should be close to zero with a random cipher
-    random_state = cipher_puzzle.CipherPuzzleState(puzzle=puzzle, cipher=cipher_puzzle.Cipher())
+    random_state = cp_base.CipherPuzzleState(puzzle=puzzle, cipher=cp_base.Cipher())
     assert scorer.score(state=random_state).value < 0.1
 
 def test_integration():
@@ -76,14 +76,14 @@ def test_integration():
         'o': 'h',
         'd': 'i',
     }
-    cipher = cipher_puzzle.Cipher(initial_map=initial_map)
+    cipher = cp_base.Cipher(initial_map=initial_map)
     puzzle = cipher.encipher(plain_text)
-    initial_state = cipher_puzzle.CipherPuzzleState(puzzle=puzzle, cipher=cipher)
+    initial_state = cp_base.CipherPuzzleState(puzzle=puzzle, cipher=cipher)
 
     words = ['these', 'are', 'words']
     phrases = ['these are words']
 
-    env = cipher_puzzle.CipherPuzzleEnvironment(
+    env = cp_base.CipherPuzzleEnvironment(
         initial_state=initial_state,
         words=words,
         phrases=phrases)

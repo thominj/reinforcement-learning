@@ -1,7 +1,9 @@
 import click
 import typing
 
-import reinforcement_learning.demos.cipher_puzzle.cipher_puzzle as cipher_puzzle
+import reinforcement_learning.demos.cipher_puzzle.agents as cp_agents
+import reinforcement_learning.demos.cipher_puzzle.base as cp_base
+import reinforcement_learning.demos.cipher_puzzle.view_models as cp_view_models
 import reinforcement_learning.agents as agents
 import reinforcement_learning.simulator as simulator
 
@@ -14,7 +16,7 @@ def demo(agent, num_steps, num_scenarios):
     agent_options = {
         'random': agents.RandomAgent,
         'learningRandom': agents.LearningRandomAgent,
-        'cipherPuzzleLearningRandom': cipher_puzzle.CipherPuzzleLearningRandomAgent,
+        'cipherPuzzleLearningRandom': cp_agents.CipherPuzzleLearningRandomAgent,
     }
     
     words_list = []
@@ -28,15 +30,14 @@ def demo(agent, num_steps, num_scenarios):
         for quote in quote_file:
             phrases_list.append(quote)
 
-    environment_generator = cipher_puzzle.CipherPuzzleEnvironmentGenerator(
+    environment_generator = cp_base.CipherPuzzleEnvironmentGenerator(
         words_list=words_list,
         phrases_list=phrases_list)
     environment = environment_generator.new_environment()
 
     agent = agent_options[agent](environment.action_list)
-#    agent = cipher_puzzle.CipherPuzzleAgent(environment.action_list)
 
-    view_model = cipher_puzzle.CipherPuzzlePrintViewModel()
+    view_model = cp_view_models.CipherPuzzlePrintViewModel()
 
     test_simulator = simulator.Simulator(
         environment_generator=environment_generator,
