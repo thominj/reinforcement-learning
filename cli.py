@@ -8,7 +8,7 @@ import reinforcement_learning.agents as agents
 import reinforcement_learning.simulator as simulator
 
 @click.command()
-@click.option('-a', '--agent', help="The agent you want to use: [random (default), learningRandom, cipherPuzzleLearningRandom]", default='random', type=str, )
+@click.option('-a', '--agent', help="The agent you want to use: [random (default), learningRandom, cipherPuzzleLearningRandom, cipherPuzzleNeural]", default='random', type=str, )
 @click.option('-n', '--num_steps', help="The number of steps to run for each scenario.", default=100, type=int)
 @click.option('-s', '--num_scenarios', help="The number of scenarios to run.", default = 10, type=int)
 def demo(agent, num_steps, num_scenarios):
@@ -17,6 +17,7 @@ def demo(agent, num_steps, num_scenarios):
         'random': agents.RandomAgent,
         'learningRandom': agents.LearningRandomAgent,
         'cipherPuzzleLearningRandom': cp_agents.CipherPuzzleLearningRandomAgent,
+        'cipherPuzzleNeural': cp_agents.CipherPuzzleNeuralAgent,
     }
     
     words_list = []
