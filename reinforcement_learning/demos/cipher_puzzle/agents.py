@@ -7,6 +7,7 @@ from typing import List, Dict
 import numpy as np
 from keras.models import Model, Sequential
 from keras.layers import Embedding, Input, Concatenate, Dense, Flatten
+from keras.optimizers import SGD
 from keras.preprocessing import sequence, text
 from keras.utils import to_categorical
 
@@ -18,6 +19,8 @@ import reinforcement_learning.demos.cipher_puzzle.base as cp_base
 class CipherPuzzleNeuralAgent(agents.Agent):
 
     max_puzzle_length = 250
+    random_prob = 0.1
+    decay_param = 0.99
 
     def __init__(self, action_list: List['base.Action']):        
         self._action_list = action_list
@@ -43,32 +46,45 @@ class CipherPuzzleNeuralAgent(agents.Agent):
         output = Dense(len(self._action_list), activation='softmax')(dense2)
         
         self.model = Model(inputs=[puzzle_input, current_state_input], outputs=output)
+        optimizer = SGD(lr=1e-03, momentum=0.1, decay=1e-04, nesterov=False)
+        self.model.compile(optimizer, 'categorical_crossentropy')
 
     def choose_action(self, state: "base.State"):
         # encode the puzzle and current output
         puzzle = self._vocabulary.encode(state.puzzle.rstrip(), self.max_puzzle_length)
         current_output = self._vocabulary.encode(state.current_output.rstrip(), self.max_puzzle_length)
-        import pdb; pdb.set_trace()
-        # pass them as model inputs to get prediction
-        prediction = self.model.predict([puzzle, current_output], batch_size=1, verbose=1)
 
-        import pdb; pdb.set_trace()
-        # save prediction vector (last Q)
+        # pass them as model inputs to get prediction
+        self.last_predictions = self.model.predict([puzzle.reshape(1,-1), current_output.reshape(1,-1)], batch_size=1)
+
         # get max value index -or- random selection
-        # save the one we picked
+        if random.uniform(0,1) < self.random_prob:
+            self.last_action_index = random.choice(range(len(self._action_list)))
+        else:
+            self.last_action_index = np.argmax(self.last_predictions)
+
         # return the action from the list
-        pass
+        return self._action_list[self.last_action_index]
 
     def learn(self, state: "base.State", reward: "base.Reward"):
         # encode the puzzle and the current state
-        # pad them
+        puzzle = self._vocabulary.encode(state.puzzle.rstrip(), self.max_puzzle_length)
+        current_output = self._vocabulary.encode(state.current_output.rstrip(), self.max_puzzle_length)
+
         # pass them as model inputs to get predictions
-        # get max value
-        # multiply by decay param and add reward
-        # this goes into the predictions array at the index of the action we took last time
+        predictions = self.model.predict([puzzle.reshape(1,-1), current_output.reshape(1,-1)], batch_size=1)
+
+        # get max value and index
+        max_value = np.max(predictions)
+
+        # multiply by decay param and add reward value to get target value for the last action
+        self.last_predictions[0, self.last_action_index] = reward.value + self.decay_param*max_value
+
         # train the model with modified predictions as "target Q"
+        loss = self.model.train_on_batch([puzzle.reshape(1,-1), current_output.reshape(1,-1)], self.last_predictions)
+
         # need to save checkpoints on some frequency
-        pass
+        print("loss: {}".format(loss))
 
     class Vocabulary():
 
@@ -88,7 +104,7 @@ class CipherPuzzleNeuralAgent(agents.Agent):
             if not max_length:
                 max_length = len(string)
             encoded = np.zeros(max_length)
-            for index, char in enumerate(string):
+            for index, char in enumerate(string[:max_length]):
                 value = self.map.get(char)
                 if value:
                     encoded[index] = value

@@ -25,7 +25,7 @@ class CipherPuzzlePrintViewModel(view_models.ViewModel):
             self.best_score = environment.reward.value
 
         if step_count % 1 == 0:
-            print("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}".format(
+            print("{}, {}, {}, {}, {}, {}, {}, {}".format(
                 datetime.datetime.now(),
                 scenario_count,
                 step_count,
@@ -33,6 +33,4 @@ class CipherPuzzlePrintViewModel(view_models.ViewModel):
                 environment.state.current_output,
                 environment.reward.value,
                 self.best_solution,
-                self.best_score,
-                min(agent.probability_map),
-                max(agent.probability_map)))
+                self.best_score))
