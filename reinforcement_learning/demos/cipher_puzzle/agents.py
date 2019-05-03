@@ -1,12 +1,13 @@
-"""Classes needed to build a Cipher Puzzle environment."""
+"""Agents for solving Cipher Puzzles."""
 import datetime
+import os
 import random
 import re
 from typing import List, Dict
 
 import numpy as np
-from keras.models import Model, Sequential
-from keras.layers import Embedding, Input, Concatenate, Dense, Flatten
+from keras.models import Model, Sequential, load_model
+from keras.layers import Embedding, Input, Concatenate, Dense, Dropout, Flatten, GRU
 from keras.optimizers import SGD
 from keras.preprocessing import sequence, text
 from keras.utils import to_categorical
@@ -19,31 +20,64 @@ import reinforcement_learning.demos.cipher_puzzle.base as cp_base
 class CipherPuzzleNeuralAgent(agents.Agent):
 
     max_puzzle_length = 250
-    random_prob = 0.1
+    random_prob = 1.0
     decay_param = 0.99
+    checkpoints_dir = 'reinforcement_learning/demos/cipher_puzzle/checkpoints/'
+    save_freq = 100
+    step_counter = 0
+    use_existing_checkpoint = True
+    model = None
 
     def __init__(self, action_list: List['base.Action']):        
         self._action_list = action_list
         self._vocabulary = self.Vocabulary()
 
+        if (self.use_existing_checkpoint):
+            checkpoint_file = self.find_last_checkpoint(self.checkpoints_dir)
+            if (checkpoint_file):
+                self.model = load_model(os.path.join(self.checkpoints_dir, checkpoint_file))
+        if self.model is None:
+            self.init_model()
+
+    def find_last_checkpoint(self, directory):
+        files = os.listdir(directory)
+        max_index = 0
+        last_checkpoint = None
+        for filepath in files:
+            if filepath[-3:] == '.h5':
+                index = int(filepath[:-3].split('-')[-1])
+                if index > max_index:
+                    max_index = index
+                    last_checkpoint = filepath
+        return last_checkpoint                
+
+    def init_model(self):
         # input layers for puzzle and current state
         puzzle_input = Input(shape=(self.max_puzzle_length,))
         current_state_input = Input(shape=(self.max_puzzle_length,))
 
         # pass them both through embedding layers
-        embedded_puzzle = Embedding(29, 10)(puzzle_input)
-        embedded_current_state = Embedding(29, 10)(current_state_input)
+        embedded_puzzle = Embedding(29, 1024)(puzzle_input)
+        embedded_current_state = Embedding(29, 1024)(current_state_input)
 
-        # concatenate and flatten the results
-        concat = Concatenate()([embedded_puzzle, embedded_current_state])
-        flatten = Flatten()(concat)
+        # GRU layers
+        input_gru = GRU(1024, activation='relu')(embedded_puzzle)
+        current_state_gru = GRU(1024, activation='relu')(embedded_current_state)
+
+        # concatenate the results
+        concat = Concatenate()([input_gru, current_state_gru])
+
+        # Dropout
+        dropout1 = Dropout(0.1)(concat)
 
         # Dense layers
-        dense1 = Dense(128, activation='relu')(flatten)
-        dense2 = Dense(64, activation='relu')(dense1)
+        dense1 = Dense(512, activation='relu')(concat)
+        dropout2 = Dropout(0.1)(dense1)
+#        dense2 = Dense(1024, activation='relu')(dense1)
+#        dense3 = Dense(512, activation='relu')(dense2)
 
         # Output layer
-        output = Dense(len(self._action_list), activation='softmax')(dense2)
+        output = Dense(len(self._action_list), activation='softmax')(dropout2)
         
         self.model = Model(inputs=[puzzle_input, current_state_input], outputs=output)
         optimizer = SGD(lr=1e-03, momentum=0.1, decay=1e-04, nesterov=False)
@@ -60,6 +94,7 @@ class CipherPuzzleNeuralAgent(agents.Agent):
         # get max value index -or- random selection
         if random.uniform(0,1) < self.random_prob:
             self.last_action_index = random.choice(range(len(self._action_list)))
+            self.random_prob_decay()
         else:
             self.last_action_index = np.argmax(self.last_predictions)
 
@@ -83,8 +118,16 @@ class CipherPuzzleNeuralAgent(agents.Agent):
         # train the model with modified predictions as "target Q"
         loss = self.model.train_on_batch([puzzle.reshape(1,-1), current_output.reshape(1,-1)], self.last_predictions)
 
-        # need to save checkpoints on some frequency
-        print("loss: {}".format(loss))
+        # save checkpoints maybe
+        self.step_counter += 1
+        if self.step_counter % self.save_freq == 0:
+            self.model.save(os.path.join(self.checkpoints_dir, 'cipher_puzzle_agent-{}.h5'.format(self.step_counter)))
+
+        print(f"loss: {loss}")
+
+    def random_prob_decay(self, decay_rate = 0.0001):
+        if self.random_prob >= 0:
+            self.random_prob = self.random_prob - decay_rate
 
     class Vocabulary():
 

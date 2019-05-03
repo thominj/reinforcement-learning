@@ -1,4 +1,4 @@
-"""Classes needed to build a Ciper Puzzle environment."""
+"""Classes for displaying information about CipherPuzzle environments and agents."""
 import datetime
 
 import reinforcement_learning.demos.cipher_puzzle as cipher_puzzle
@@ -25,7 +25,7 @@ class CipherPuzzlePrintViewModel(view_models.ViewModel):
             self.best_score = environment.reward.value
 
         if step_count % 1 == 0:
-            print("{}, {}, {}, {}, {}, {}, {}, {}".format(
+            print("{}, {}, {}, {}, {}, {}, {}, {}, {}".format(
                 datetime.datetime.now(),
                 scenario_count,
                 step_count,
@@ -33,4 +33,6 @@ class CipherPuzzlePrintViewModel(view_models.ViewModel):
                 environment.state.current_output,
                 environment.reward.value,
                 self.best_solution,
-                self.best_score))
+                self.best_score,
+                agent.last_action_index
+            ))
